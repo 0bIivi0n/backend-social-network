@@ -44,11 +44,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 		w.Header().Set("Content-Type", "application/json")
 
-		uuid := "osef1234"
-		username := "osef"
-		email := "osef@osef.osef"
-		password := "osef"
-
 		var newUser st.User
 		err := json.NewDecoder(r.Body).Decode(&newUser)
 		if err != nil {
@@ -56,15 +51,27 @@ func SignupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			return
 		}
 
-		fmt.Println(newUser.Username)
+		fmt.Println(newUser)
 
-		query, err := db.Prepare("INSERT INTO users(uuid, username, email, password) VALUES(?, ?, ?, ?)")
+		uuid := 1
+		haveImage := false
+
+		username := newUser.Username
+		firstName := newUser.FirstName
+		lastName := newUser.LastName
+		email := newUser.Email
+		password := newUser.Password
+		dateOfBirth := newUser.DateOfBirth
+		aboutMe := newUser.AboutMe
+		haveImage = newUser.HaveImage
+
+		query, err := db.Prepare("INSERT INTO users(uuid, username, first_name, last_name, email, password, date_of_birth, about_me, have_image) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		if err != nil {
 			fmt.Println("Error in query to add user")
 			return
 		}
 
-		_, err = query.Exec(uuid, username, email, password)
+		_, err = query.Exec(uuid, username, firstName, lastName, email, password, dateOfBirth, aboutMe, haveImage)
 		if err != nil {
 			fmt.Printf("Error executing query to add user with username: %s", username)
 			return
