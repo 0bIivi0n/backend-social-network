@@ -20,8 +20,12 @@ func main() {
 	}
 	defer db.Close()
 
-	http.HandleFunc("/api/login", h.LoginHandler)
+	http.HandleFunc("/api/login", func(w http.ResponseWriter, r *http.Request) {
+		h.LoginHandler(w, r, db)
+	})
+
 	http.HandleFunc("/api/logout", h.LogoutHandler)
+
 	http.HandleFunc("/api/signup", func(w http.ResponseWriter, r *http.Request) {
 		h.SignupHandler(w, r, db)
 	})

@@ -8,13 +8,78 @@ import (
 	st "socialNetwork/Structs"
 )
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		// Add login logic here
+func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	fmt.Println("entered LoginHandler")
 
-		fmt.Fprintln(w, "Login Endpoint")
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method == "POST" {
+
+		fmt.Println("Method is POST")
+
+		// Setting response header
+		w.Header().Set("Content-Type", "application/json")
+
+		// Get login creds from front
+		var loginData st.LoginData
+		err := json.NewDecoder(r.Body).Decode(&loginData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		fmt.Println("creds = ", loginData)
+
+		// Get user
+		var user st.User
+		err = db.QueryRow("SELECT * FROM users WHERE email = ?", loginData.Email).Scan(
+			&user.Uuid,
+			&user.Username,
+			&user.FirstName,
+			&user.LastName,
+			&user.Email,
+			&user.Password,
+			&user.DateOfBirth,
+			&user.AboutMe,
+			&user.HaveImage,
+		)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Println("user found in db")
+
+		fmt.Println(user)
+
+		// Check password
+		if user.Password == loginData.Password {
+			// login success
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode((map[string]string{"message": "Login succesfull"}))
+			fmt.Println("Provided password is good")
+		} else {
+			// login fail
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		}
+
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		fmt.Println("Looks like method is not POST")
 	}
 }
 
