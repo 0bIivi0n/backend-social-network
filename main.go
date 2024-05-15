@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	sndb "socialNetwork/Database"
 	h "socialNetwork/Handlers"
@@ -12,7 +11,7 @@ import (
 
 func main() {
 
-	os.Remove("socialNetwork.db")
+	//os.Remove("socialNetwork.db")
 
 	db, err := sndb.InitDB()
 	if err != nil {
@@ -29,8 +28,13 @@ func main() {
 	http.HandleFunc("/api/signup", func(w http.ResponseWriter, r *http.Request) {
 		h.SignupHandler(w, r, db)
 	})
-	http.HandleFunc("/api/profile", h.ProfileHandler)
-	http.HandleFunc("/api/posts", h.PostsHandler)
+	http.HandleFunc("/api/profile/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("going to profile handler")
+		h.ProfileHandler(w, r, db)
+	})
+	http.HandleFunc("/api/posts", func(w http.ResponseWriter, r *http.Request) {
+		h.GetPostsHandler(w, r, db)
+	})
 	http.HandleFunc("/api/groups", h.GroupsHandler)
 	http.HandleFunc("/api/session", h.SessionHandler)
 

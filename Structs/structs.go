@@ -16,3 +16,19 @@ type LoginData struct {
 	Email    string `JSON:"email"`
 	Password string `JSON:"password"`
 }
+
+type Comment struct {
+	Uuid     string
+	UserUuid string
+	Content  string
+}
+
+type Post struct {
+	Uuid      string
+	UserUuid  string
+	Content   string
+	Date      string
+	Type      string
+	GroupUuid string
+	HaveImage bool
+}

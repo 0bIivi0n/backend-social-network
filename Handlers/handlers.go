@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	st "socialNetwork/Structs"
+	"strings"
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -148,32 +149,76 @@ func SignupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 }
 
-func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	// Handle both GET and PUT requests
-	switch r.Method {
-	case "GET":
-		fmt.Fprintln(w, "Fetch Profile Endpoint")
-	case "PUT":
-		fmt.Fprintln(w, "Update Profile Endpoint")
-	default:
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+func ProfileHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+
+	fmt.Println("Entered Profile Handler")
+
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
 	}
+
+	path := strings.TrimPrefix(r.URL.Path, "/api/profile/")
+	if path == "" {
+		http.Error(w, "Profile UUID is missing", http.StatusBadRequest)
+		fmt.Println("profile UUID is missing")
+		return
+	}
+
+	uuid := path
+
+	fmt.Printf("Profile requested for UUID: %s", uuid)
 }
 
-func PostsHandler(w http.ResponseWriter, r *http.Request) {
-	// Example of handling multiple types of requests in one function
+func GetPostsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
-	switch r.Method {
-	case "GET":
-		fmt.Fprintln(w, "Get Posts Endpoint")
-	case "POST":
-		fmt.Fprintln(w, "Create Post Endpoint")
-	case "PUT":
-		fmt.Fprintln(w, "Update Post Endpoint")
-	case "DELETE":
-		fmt.Fprintln(w, "Delete Post Endpoint")
-	default:
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	fmt.Println("entered GetPostHandler")
+
+	// Set CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Example of handling multiple types of requests in one function
+	if r.Method != "GET" {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		return
+	} else {
+
+		// Setting response header
+		w.Header().Set("Content-Type", "application/json")
+
+		var posts []st.Post
+
+		rows, err := db.Query("SELECT * FROM posts")
+		if err != nil {
+			fmt.Println("Error reading post table")
+			return
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			var post st.Post
+			err := rows.Scan(&post.Uuid, &post.UserUuid, &post.Content, &post.Date, &post.Type, &post.GroupUuid, &post.HaveImage)
+			if err != nil {
+				http.Error(w, "Error getting posts in db", http.StatusInternalServerError)
+				fmt.Println(err)
+				return
+			}
+			posts = append(posts, post)
+		}
+		fmt.Println(posts)
 	}
 }
 
